@@ -23,7 +23,7 @@ export class SeedService {
     //before executing seed we need to delete all data from database
     await this.pokemonModel.deleteMany({});
 
-    const { results } = await this.http.get<PokeResponse>('https://pokeapi.co/api/v2/pokemon?limit=10');
+    const { results } = await this.http.get<PokeResponse>('https://pokeapi.co/api/v2/pokemon?limit=905');
 
     // const insertPromisesArray: Promise<Pokemon>[] = []; //array of promises method
     const pokemonToInsert: { name: string, number: number }[] = []; //array of objects
