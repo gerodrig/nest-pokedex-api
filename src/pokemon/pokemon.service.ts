@@ -12,6 +12,7 @@ import { CreatePokemonDto } from './dto/create-pokemon.dto';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto';
 
 import { Pokemon } from './entities/pokemon.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class PokemonService {
@@ -31,9 +32,15 @@ export class PokemonService {
     }
   }
 
-  async findAll() {
+  async findAll(PaginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = PaginationDto;
     //return all from monngodb database
-    return await this.pokemonModel.find().sort({ number: 1 });
+    return await this.pokemonModel
+      .find()
+      .limit(limit)
+      .skip(offset)
+      .sort({ number: 1 })
+      .select('-__v');
   }
 
   async findOne(searchTerm: string) {
@@ -84,9 +91,10 @@ export class PokemonService {
     // await pokemon.deleteOne();
     //const result = await this.pokemonModel.findByIdAndDelete(id);
     const { deletedCount } = await this.pokemonModel.deleteOne({ _id: id });
-    if (deletedCount === 0) throw new BadRequestException(`Pokemon with id "${id}" not found`);
+    if (deletedCount === 0)
+      throw new BadRequestException(`Pokemon with id "${id}" not found`);
 
-    return {message: 'Pokemon deleted'};
+    return { message: 'Pokemon deleted' };
   }
 
   private handleExceptions(error: any) {

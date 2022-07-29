@@ -1,26 +1,49 @@
 import { Injectable } from '@nestjs/common';
-import axios, { AxiosInstance } from 'axios';
+import { InjectModel } from '@nestjs/mongoose';
+
+import { Model } from 'mongoose';
+import { AxiosAdapter } from 'src/common/adapters/axios.adapter';
+import { Pokemon } from 'src/pokemon/entities/pokemon.entity';
 
 @Injectable()
 export class SeedService {
 
-  private readonly axios: AxiosInstance = axios;
+  
+
+  constructor(
+    @InjectModel(Pokemon.name)
+    private readonly pokemonModel: Model<Pokemon>,
+
+    private readonly http: AxiosAdapter
+  ) {}
 
 //905
   async executeSeed() {
-    const { data } = await this.axios.get<PokeResponse>('https://pokeapi.co/api/v2/pokemon?limit=5');
 
+    //before executing seed we need to delete all data from database
+    await this.pokemonModel.deleteMany({});
 
-    data.results.forEach(({name, url}) => {
+    const { results } = await this.http.get<PokeResponse>('https://pokeapi.co/api/v2/pokemon?limit=10');
+
+    // const insertPromisesArray: Promise<Pokemon>[] = []; //array of promises method
+    const pokemonToInsert: { name: string, number: number }[] = []; //array of objects
+    
+
+    results.forEach(async({name, url}) => {
       const segments = url.split('/');
       const number:number  = +segments.at(-2);
 
-      console.log({name, number});
+      //const pokemon = await this.pokemonModel.create({name, number});
+      // insertPromisesArray.push(this.pokemonModel.create({name, number})); //array of promises method
+      pokemonToInsert.push({name, number}); //array of objects
+      
+      //console.log({name, number});
 
     });
+    await this.pokemonModel.insertMany(pokemonToInsert); //array of objects This is prefered method as database will be connected once.
+    // await Promise.all(insertPromisesArray); //array of promises method
 
-
-    return data.results;
+    return 'Seed Executed';
   }
 
 }
